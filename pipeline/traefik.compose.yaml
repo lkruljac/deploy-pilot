@@ -1,0 +1,32 @@
+# Installed ONCE on the NAS at /volume1/docker/traefik/compose.yaml.
+# Shared by every service. Included here for reference.
+#
+# Requires the shared network to exist first:
+#   docker network create edge
+#
+# Listens on loopback only. DSM's nginx owns 0.0.0.0:443, terminates TLS with
+# the *.lukak.dev wildcard certificate, and forwards here.
+services:
+  traefik:
+    image: traefik:v3.3
+    container_name: traefik
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=edge
+      - --entryPoints.web.address=:80
+      - --entryPoints.web.forwardedHeaders.trustedIPs=127.0.0.1/32,172.16.0.0/12,192.168.0.0/16
+      - --api.dashboard=false
+      - --log.level=INFO
+      - --accesslog=true
+    ports:
+      - "127.0.0.1:8081:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - edge
+    restart: unless-stopped
+
+networks:
+  edge:
+    external: true

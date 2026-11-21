@@ -1,26 +1,43 @@
 # Deployed to the Synology NAS at /volume1/docker/deploy-pilot/compose.yaml
 #
-# Ports bind to 127.0.0.1 only. The DSM reverse proxy is the single entry point,
-# which is what makes its LAN-only access control profile meaningful.
+# No host ports. Traefik reaches the containers over the shared `edge`
+# network and routes by Host header, so adding a service never requires
+# allocating or remembering a port number.
 services:
   app:
     image: ghcr.io/lkruljac/deploy-pilot:latest
     container_name: deploy-pilot
-    ports:
-      - "127.0.0.1:8150:8080"
     environment:
       - ENVIRONMENT=production
     restart: unless-stopped
+    networks: [edge]
     labels:
       - com.centurylinklabs.watchtower.enable=true
+      - traefik.enable=true
+      - traefik.http.routers.deploy-pilot.rule=Host(`deploy-pilot.lukak.dev`)
+      - traefik.http.routers.deploy-pilot.entrypoints=web
+      - traefik.http.services.deploy-pilot.loadbalancer.server.port=8080
 
   app-develop:
     image: ghcr.io/lkruljac/deploy-pilot:develop
     container_name: deploy-pilot-develop
-    ports:
-      - "127.0.0.1:9150:8080"
     environment:
       - ENVIRONMENT=develop
     restart: unless-stopped
+    networks: [edge]
     labels:
       - com.centurylinklabs.watchtower.enable=true
+      - traefik.enable=true
+      - traefik.http.routers.deploy-pilot-develop.rule=Host(`deploy-pilot-develop.lukak.dev`)
+      - traefik.http.routers.deploy-pilot-develop.entrypoints=web
+      - traefik.http.routers.deploy-pilot-develop.middlewares=lanonly@docker
+      - traefik.http.services.deploy-pilot-develop.loadbalancer.server.port=8080
+      # depth=1 reads the client IP that DSM's nginx appends to X-Forwarded-For.
+      # A client-supplied XFF cannot spoof it, because nginx appends rather than
+      # replaces, leaving the true address rightmost.
+      - traefik.http.middlewares.lanonly.ipallowlist.sourcerange=192.168.0.0/24
+      - traefik.http.middlewares.lanonly.ipallowlist.ipstrategy.depth=1
+
+networks:
+  edge:
+    external: true

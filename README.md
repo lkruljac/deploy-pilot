@@ -19,7 +19,13 @@ GitHub Actions  ──  builds the image on GitHub's runners
   Watchtower    ──  polls from inside the LAN, pulls, restarts
         │
         ▼
-  Synology NAS  ──  container bound to 127.0.0.1, fronted by DSM reverse proxy
+   DSM nginx    ──  terminates TLS with the *.lukak.dev wildcard cert
+        │
+        ▼
+    Traefik     ──  routes by Host label, applies LAN-only access control
+        │
+        ▼
+  container     ──  no host port, reached over the shared `edge` network
 ```
 
 Three properties this design is built around:
@@ -27,6 +33,7 @@ Three properties this design is built around:
 - **Nothing new is exposed.** Watchtower polls outbound, so there is no webhook endpoint, no port forward and no inbound path to the NAS.
 - **No build load on the NAS.** Images are built on GitHub's hardware; the NAS only pulls and runs.
 - **No registry credentials to manage.** Actions pushes to GHCR using the automatic `GITHUB_TOKEN`. A read-only token is needed on the NAS only once images become private.
+- **No ports to allocate.** Services publish nothing to the host. Routing and access control are compose labels, so adding a service is a config change rather than a port-assignment decision.
 
 A self-hosted runner is deliberately *not* used for public repositories: a pull request from a fork can execute arbitrary code on it, and a deploy runner needs Docker socket access. The pull-based design avoids that entirely.
 
