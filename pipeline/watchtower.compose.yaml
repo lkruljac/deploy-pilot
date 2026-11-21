@@ -1,0 +1,23 @@
+# Installed ONCE on the NAS at /volume1/docker/watchtower/compose.yaml.
+# Shared by every service, not per-project. Included here for reference.
+#
+# WATCHTOWER_LABEL_ENABLE means it only touches containers carrying
+# com.centurylinklabs.watchtower.enable=true, so pre-existing stacks
+# (pihole, jellyfin, homepage, ...) are never auto-updated.
+#
+# Private images additionally require, on the NAS:
+#   docker login ghcr.io -u lkruljac      # paste a PAT with read:packages
+# which writes ~/.docker/config.json for the mount below.
+services:
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /root/.docker/config.json:/config.json:ro
+    environment:
+      - TZ=Europe/Zagreb
+      - WATCHTOWER_POLL_INTERVAL=300
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_CLEANUP=true
+    restart: unless-stopped

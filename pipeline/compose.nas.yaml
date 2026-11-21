@@ -1,0 +1,26 @@
+# Deployed to the Synology NAS at /volume1/docker/deploy-pilot/compose.yaml
+#
+# Ports bind to 127.0.0.1 only. The DSM reverse proxy is the single entry point,
+# which is what makes its LAN-only access control profile meaningful.
+services:
+  app:
+    image: ghcr.io/lkruljac/deploy-pilot:latest
+    container_name: deploy-pilot
+    ports:
+      - "127.0.0.1:8150:8080"
+    environment:
+      - ENVIRONMENT=production
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+
+  app-develop:
+    image: ghcr.io/lkruljac/deploy-pilot:develop
+    container_name: deploy-pilot-develop
+    ports:
+      - "127.0.0.1:9150:8080"
+    environment:
+      - ENVIRONMENT=develop
+    restart: unless-stopped
+    labels:
+      - com.centurylinklabs.watchtower.enable=true

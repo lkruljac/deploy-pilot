@@ -1,0 +1,13 @@
+.git
+.github
+.gitignore
+docs
+pipeline
+compose.yaml
+README.md
+.env
+.env.*
+__pycache__/
+*.py[cod]
+.venv/
+venv/
