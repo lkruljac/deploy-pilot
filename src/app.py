@@ -1,5 +1,6 @@
 import json
 import os
+import socket
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 PORT = int(os.environ.get("PORT", "8080"))
@@ -10,6 +11,7 @@ BUILD = {
     "branch": os.environ.get("GIT_BRANCH", "unknown"),
     "commit": os.environ.get("GIT_SHA", "unknown"),
     "built_at": os.environ.get("BUILD_TIME", "unknown"),
+    "host": socket.gethostname(),
 }
 
 PAGE = """<!doctype html>
@@ -59,6 +61,7 @@ PAGE = """<!doctype html>
       <dt>Branch</dt><dd>{branch}</dd>
       <dt>Commit</dt><dd>{commit}</dd>
       <dt>Built at</dt><dd>{built_at}</dd>
+      <dt>Host</dt><dd>{host}</dd>
     </dl>
   </main>
 </body>
